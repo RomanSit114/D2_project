@@ -1,0 +1,74 @@
+#Создание новой категории
+
+new_category = Category(name='Science')
+new_category.save()
+
+#Создание автора статьи
+
+user1 = User.objects.create(username='Ivan', first_name='Petr')
+Author.objects.create(authorUser=user1)
+
+#Добавление статьи/новости
+
+Post.objects.create(author=Author.objects.get(authorUser=User.objects.get(username='Ivan')), categoryType='NW', title='title example', text='text example')
+
+#Присвоение статье/новости категории
+
+p1 = Post.objects.get(pk=1)
+p2 = Post.objects.get(pk=2) 
+p3 = Post.objects.get(pk=3) 
+c1 = Category.objects.get(name='IT')
+c2 = Category.objects.get(name='Education') 
+p1.postCategory.add(c1)
+p2.postCategory.add(c1, c2)
+p3.postCategory.add(c2)
+
+#Добавление комментария
+
+Comment.objects.create(commentUser=User.objects.get(username='Alex'), commentPost=Post.objects.get(pk=4), text='comment text4')
+
+#Добавление лайка/дизлайка на пост/комментарий
+
+Post.objects.get(pk=4).like()
+Comment.objects.get(pk=4).dislike()
+
+#Обновить рейтинги пользователей
+
+Author.objects.get(authorUser=User.objects.get(username='Ivan')).update_rating()
+a = Author.objects.get(authorUser=User.objects.get(username='Ivan'))    
+a.ratingAuthor
+
+#Вывести username и рейтинг лучшего пользователя
+
+best = Author.objects.all().order_by('-ratingAuthor').values('authorUser', 'ratingAuthor')[0]
+print(best)
+
+#Вывести дату добавления, username автора, рейтинг, заголовок и превью лучшей статьи, основываясь на лайках/дислайках к этой статье
+
+best_post = Post.objects.annotate(likes_minus_dislikes=Sum('rating')).order_by('-likes_minus_dislikes').first()
+
+date_added = best_post.dateCreation
+author_username = best_post.author.authorUser.username
+rating = best_post.rating
+title = best_post.title
+preview = best_post.preview()
+
+print("Дата добавления:", date_added)
+print("Username автора:", author_username)
+print("Рейтинг:", rating)
+print("Заголовок:", title)
+print("Превью:", preview)
+
+#Вывести все комментарии (дата, пользователь, рейтинг, текст) к этой статье
+
+comments = Comment.objects.filter(commentPost=best_post)
+
+for comment in comments:
+    date_added = comment.dateCreation
+    username = comment.commentUser.username
+    rating = comment.rating
+    text = comment.text
+    print("Дата добавления:", date_added)
+    print("Пользователь:", username)
+    print("Рейтинг:", rating)
+    print("Текст:", text)
